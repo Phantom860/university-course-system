@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.university.university_course_system.mapper.EnrollmentMapper">
+
+    <resultMap id="EnrollmentDetailMap" type="com.university.university_course_system.entity.Enrollment">
+        <id property="enrollmentId" column="enrollment_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="sectionId" column="section_id"/>
+        <result property="semesterId" column="semester_id"/>
+        <result property="enrollmentStatus" column="enrollment_status"/>
+        <result property="numericGrade" column="numeric_grade"/>
+        <result property="letterGrade" column="letter_grade"/>
+        <result property="gradePoints" column="grade_points"/>
+        <result property="enrolledAt" column="enrolled_at"/>
+        <result property="updatedAt" column="updated_at"/>
+
+        <!-- 关联学生对象 -->
+        <association property="student" javaType="com.university.university_course_system.entity.Student">
+            <result property="studentNumber" column="student_number"/>
+            <result property="firstName" column="first_name"/>
+            <result property="lastName" column="last_name"/>
+        </association>
+
+        <!-- 关联课程段对象 -->
+        <association property="courseSection" javaType="com.university.university_course_system.entity.CourseSection">
+            <result property="sectionCode" column="section_code"/>
+
+            <!-- 嵌套关联课程对象 -->
+            <association property="course" javaType="com.university.university_course_system.entity.Course">
+                <result property="courseCode" column="course_code"/>
+                <result property="courseName" column="course_name"/>
+                <result property="credits" column="credits"/>  <!-- 添加这行 -->
+            </association>
+
+            <!-- 嵌套关联教师对象 -->
+            <association property="instructor" javaType="com.university.university_course_system.entity.Instructor">
+                <result property="firstName" column="instructor_first_name"/>
+                <result property="lastName" column="instructor_last_name"/>
+            </association>
+        </association>
+    </resultMap>
+
+    <!-- 根据ID查询选课详情 -->
+    <select id="findByIdWithDetails" resultMap="EnrollmentDetailMap">
+        SELECT e.*,
+        s.student_number, s.first_name, s.last_name,
+        c.course_code, c.course_name,
+        cs.section_code,
+        i.first_name as instructor_first_name, i.last_name as instructor_last_name
+        FROM enrollment e
+        JOIN student s ON e.student_id = s.student_id
+        JOIN coursesection cs ON e.section_id = cs.section_id
+        JOIN course c ON cs.course_id = c.course_id
+        JOIN instructor i ON cs.instructor_id = i.instructor_id
+        WHERE e.enrollment_id = #{enrollmentId}
+    </select>
+
+    <!-- 根据学生ID查询选课列表 -->
+    <select id="findByStudentId" resultMap="EnrollmentDetailMap">
+        SELECT e.*,
+        s.student_number, s.first_name, s.last_name,
+        c.course_code, c.course_name, c.credits,
+        cs.section_code,
+        i.first_name as instructor_first_name, i.last_name as instructor_last_name
+        FROM enrollment e
+        JOIN student s ON e.student_id = s.student_id
+        JOIN coursesection cs ON e.section_id = cs.section_id
+        JOIN course c ON cs.course_id = c.course_id
+        JOIN instructor i ON cs.instructor_id = i.instructor_id
+        WHERE e.student_id = #{studentId}
+    </select>
+
+    <!-- 根据课程段ID查询选课列表 -->
+    <select id="findBySectionId" resultMap="EnrollmentDetailMap">
+        SELECT e.*,
+        s.student_number, s.first_name, s.last_name,
+        c.course_code, c.course_name,
+        cs.section_code,
+        i.first_name as instructor_first_name, i.last_name as instructor_last_name
+        FROM enrollment e
+        JOIN student s ON e.student_id = s.student_id
+        JOIN coursesection cs ON e.section_id = cs.section_id
+        JOIN course c ON cs.course_id = c.course_id
+        JOIN instructor i ON cs.instructor_id = i.instructor_id
+        WHERE e.section_id = #{sectionId}
+    </select>
+
+    <!-- 成绩字母等级分布统计 -->
+    <!-- 成绩字母等级分布统计 - 完全匹配Java逻辑 -->
+    <select id="getGradeDistributionByCourse" resultType="map">
+        SELECT
+        COALESCE(SUM(CASE WHEN numeric_grade >= 90 THEN 1 ELSE 0 END), 0) as grade_A,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 85 AND numeric_grade &lt; 90 THEN 1 ELSE 0 END), 0) as grade_A_minus,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 82 AND numeric_grade &lt; 85 THEN 1 ELSE 0 END), 0) as grade_B_plus,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 78 AND numeric_grade &lt; 82 THEN 1 ELSE 0 END), 0) as grade_B,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 75 AND numeric_grade &lt; 78 THEN 1 ELSE 0 END), 0) as grade_B_minus,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 72 AND numeric_grade &lt; 75 THEN 1 ELSE 0 END), 0) as grade_C_plus,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 68 AND numeric_grade &lt; 72 THEN 1 ELSE 0 END), 0) as grade_C,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 64 AND numeric_grade &lt; 68 THEN 1 ELSE 0 END), 0) as grade_C_minus,
+        COALESCE(SUM(CASE WHEN numeric_grade >= 60 AND numeric_grade &lt; 64 THEN 1 ELSE 0 END), 0) as grade_D,
+        COALESCE(SUM(CASE WHEN numeric_grade &lt; 60 THEN 1 ELSE 0 END), 0) as grade_F
+        FROM enrollment e
+        JOIN coursesection cs ON e.section_id = cs.section_id
+        WHERE cs.course_id = #{courseId} AND e.numeric_grade IS NOT NULL
+    </select>
+
+    <!-- 分数段分布统计 -->
+    <select id="getScoreDistributionByCourse" resultType="map">
+        SELECT
+        COALESCE(SUM(CASE WHEN numeric_grade &gt;= 90 THEN 1 ELSE 0 END), 0) as score_90_100,
+        COALESCE(SUM(CASE WHEN numeric_grade &gt;= 80 AND numeric_grade &lt; 90 THEN 1 ELSE 0 END), 0) as score_80_89,
+        COALESCE(SUM(CASE WHEN numeric_grade &gt;= 70 AND numeric_grade &lt; 80 THEN 1 ELSE 0 END), 0) as score_70_79,
+        COALESCE(SUM(CASE WHEN numeric_grade &gt;= 60 AND numeric_grade &lt; 70 THEN 1 ELSE 0 END), 0) as score_60_69,
+        COALESCE(SUM(CASE WHEN numeric_grade &lt; 60 THEN 1 ELSE 0 END), 0) as score_0_59
+        FROM enrollment e
+        JOIN coursesection cs ON e.section_id = cs.section_id
+        WHERE cs.course_id = #{courseId} AND e.numeric_grade IS NOT NULL
+    </select>
+
+</mapper>

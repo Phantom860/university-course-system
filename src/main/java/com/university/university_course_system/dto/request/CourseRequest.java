@@ -1,0 +1,73 @@
+package com.university.university_course_system.dto.request;
+
+import com.university.university_course_system.entity.Course;
+import lombok.Data;
+import java.math.BigDecimal;
+
+@Data
+public class CourseRequest {
+    private String courseCode;
+    private String courseName;
+    private BigDecimal credits;
+    private Integer departmentId;
+    private Course.CourseType courseType;
+    private String description;
+
+    public Course.CourseType getCourseType() {
+        return courseType;
+    }
+
+    public void setCourseType(Course.CourseType courseType) {
+        this.courseType = courseType;
+    }
+
+    private Integer totalHours;
+
+    public String getCourseCode() {
+        return courseCode;
+    }
+
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
+
+    public BigDecimal getCredits() {
+        return credits;
+    }
+
+    public void setCredits(BigDecimal credits) {
+        this.credits = credits;
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getTotalHours() {
+        return totalHours;
+    }
+
+    public void setTotalHours(Integer totalHours) {
+        this.totalHours = totalHours;
+    }
+}

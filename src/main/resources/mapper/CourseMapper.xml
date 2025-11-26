@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.university.university_course_system.mapper.CourseMapper">
+
+    <resultMap id="CourseWithDepartmentMap" type="com.university.university_course_system.entity.Course">
+        <id property="courseId" column="course_id"/>
+        <result property="courseCode" column="course_code"/>
+        <result property="courseName" column="course_name"/>
+        <result property="credits" column="credits"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="courseType" column="course_type"/>
+        <result property="description" column="description"/>
+        <result property="totalHours" column="total_hours"/>
+
+        <!-- 关联院系对象 -->
+        <association property="department" javaType="com.university.university_course_system.entity.Department">
+            <id property="departmentId" column="department_id"/>
+            <result property="departmentName" column="department_name"/>
+        </association>
+    </resultMap>
+
+    <!-- 根据ID查询课程（含院系信息） -->
+    <select id="findByIdWithDepartment" resultMap="CourseWithDepartmentMap">
+        SELECT c.*, d.department_name
+        FROM course c LEFT JOIN department d ON c.department_id = d.department_id
+        WHERE c.course_id = #{courseId}
+    </select>
+
+    <!-- 根据课程代码查询课程（含院系信息） -->
+    <select id="findByCourseCode" resultMap="CourseWithDepartmentMap">
+        SELECT c.*, d.department_name
+        FROM course c LEFT JOIN department d ON c.department_id = d.department_id
+        WHERE c.course_code = #{courseCode}
+    </select>
+
+    <!-- 查询所有课程（含院系信息） -->
+    <select id="findAllWithDepartment" resultMap="CourseWithDepartmentMap">
+        SELECT c.*, d.department_name
+        FROM course c LEFT JOIN department d ON c.department_id = d.department_id
+    </select>
+
+    <!-- 根据院系ID查询课程（含院系信息） -->
+    <select id="findByDepartmentId" resultMap="CourseWithDepartmentMap">
+        SELECT c.*, d.department_name
+        FROM course c LEFT JOIN department d ON c.department_id = d.department_id
+        WHERE c.department_id = #{departmentId}
+    </select>
+
+    <!-- 院系课程统计 -->
+    <select id="findCourseStatisticsByDepartment" resultType="com.university.university_course_system.dto.response.GradeStatisticsDTO">
+        SELECT
+        c.course_code as courseCode,
+        c.course_name as courseName,
+        COUNT(DISTINCT e.student_id) as totalStudents,
+        SUM(CASE WHEN e.enrollment_status = 'passed' THEN 1 ELSE 0 END) as passedStudents,
+        SUM(CASE WHEN e.enrollment_status = 'failed' THEN 1 ELSE 0 END) as failedStudents,
+        CASE
+        WHEN COUNT(DISTINCT e.student_id) > 0 THEN
+        ROUND((SUM(CASE WHEN e.enrollment_status = 'passed' THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT e.student_id)), 2)
+        ELSE 0
+        END as passRate,
+        ROUND(AVG(e.numeric_grade), 2) as averageGrade,
+        ROUND(MAX(e.numeric_grade), 2) as maxGrade,
+        ROUND(MIN(e.numeric_grade), 2) as minGrade
+        FROM course c
+        LEFT JOIN coursesection cs ON c.course_id = cs.course_id
+        LEFT JOIN enrollment e ON cs.section_id = e.section_id AND e.numeric_grade IS NOT NULL
+        WHERE c.department_id = #{departmentId}
+        GROUP BY c.course_id, c.course_code, c.course_name
+        ORDER BY c.course_code
+    </select>
+
+</mapper>

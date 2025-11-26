@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.university.university_course_system.mapper.StudentMapper">
+
+    <resultMap id="StudentWithDepartmentMap" type="com.university.university_course_system.entity.Student">
+        <id property="studentId" column="student_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="studentNumber" column="student_number"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="gender" column="gender"/>
+        <result property="dateOfBirth" column="date_of_birth"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="major" column="major"/>
+        <result property="admissionYear" column="admission_year"/>
+        <result property="totalCredits" column="total_credits"/>
+        <result property="cumulativeGpa" column="cumulative_gpa"/>
+
+        <!-- 关联院系对象 -->
+        <association property="department" javaType="com.university.university_course_system.entity.Department">
+            <id property="departmentId" column="department_id"/>
+            <result property="departmentName" column="department_name"/>
+        </association>
+    </resultMap>
+
+    <!-- 根据ID查询学生（含院系信息） -->
+    <select id="findByIdWithDepartment" resultMap="StudentWithDepartmentMap">
+        SELECT s.*, d.department_name
+        FROM student s LEFT JOIN department d ON s.department_id = d.department_id
+        WHERE s.student_id = #{studentId}
+    </select>
+
+    <!-- 根据学号查询学生（含院系信息） -->
+    <select id="findByStudentNumber" resultMap="StudentWithDepartmentMap">
+        SELECT s.*, d.department_name
+        FROM student s LEFT JOIN department d ON s.department_id = d.department_id
+        WHERE s.student_number = #{studentNumber}
+    </select>
+
+    <!-- 查询所有学生（含院系信息） -->
+    <select id="findAllWithDepartment" resultMap="StudentWithDepartmentMap">
+        SELECT s.*, d.department_name
+        FROM student s LEFT JOIN department d ON s.department_id = d.department_id
+    </select>
+
+    <!-- 根据院系ID查询学生（含院系信息） -->
+    <select id="findByDepartmentId" resultMap="StudentWithDepartmentMap">
+        SELECT s.*, d.department_name
+        FROM student s LEFT JOIN department d ON s.department_id = d.department_id
+        WHERE s.department_id = #{departmentId}
+    </select>
+
+</mapper>
