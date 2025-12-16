@@ -2,6 +2,7 @@ package com.university.university_course_system.mapper;
 
 import com.university.university_course_system.dto.response.GradeStatisticsDTO;
 import com.university.university_course_system.entity.Course;
+import com.university.university_course_system.entity.CourseSection;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -33,6 +34,10 @@ public interface CourseMapper {
 
     @Select("SELECT COUNT(*) FROM course WHERE course_code = #{courseCode}")
     int countByCourseCode(@Param("courseCode") String courseCode);
+
+    //根据课程名查 courseId
+    @Select("SELECT * FROM course WHERE course_name = #{courseName}")
+    Course findByCourseName(String courseName);
 
     List<GradeStatisticsDTO> findCourseStatisticsByDepartment(@Param("departmentId") Integer departmentId);
 }

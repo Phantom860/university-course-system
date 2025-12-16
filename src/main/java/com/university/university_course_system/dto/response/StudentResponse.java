@@ -2,6 +2,8 @@ package com.university.university_course_system.dto.response;
 
 import com.university.university_course_system.entity.Student;
 import lombok.Data;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -15,7 +17,7 @@ public class StudentResponse {
     private String departmentName;
     private String major;
     private Integer admissionYear;
-    private Double totalCredits;
+    private BigDecimal totalCredits;
 
     public Student.Gender getGender() {
         return gender;
@@ -25,7 +27,7 @@ public class StudentResponse {
         this.gender = gender;
     }
 
-    private Double cumulativeGpa;
+    private BigDecimal cumulativeGpa;
 
     public Integer getStudentId() {
         return studentId;
@@ -93,19 +95,19 @@ public class StudentResponse {
         this.admissionYear = admissionYear;
     }
 
-    public Double getTotalCredits() {
+    public BigDecimal getTotalCredits() {
         return totalCredits;
     }
 
-    public void setTotalCredits(Double totalCredits) {
+    public void setTotalCredits(BigDecimal totalCredits) {
         this.totalCredits = totalCredits;
     }
 
-    public Double getCumulativeGpa() {
+    public BigDecimal getCumulativeGpa() {
         return cumulativeGpa;
     }
 
-    public void setCumulativeGpa(Double cumulativeGpa) {
+    public void setCumulativeGpa(BigDecimal cumulativeGpa) {
         this.cumulativeGpa = cumulativeGpa;
     }
 }

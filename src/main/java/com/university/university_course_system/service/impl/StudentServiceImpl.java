@@ -1,11 +1,13 @@
 package com.university.university_course_system.service.impl;
 
 import com.university.university_course_system.dto.request.StudentRequest;
+import com.university.university_course_system.dto.response.StudentGpaDTO;
 import com.university.university_course_system.dto.response.StudentResponse;
 import com.university.university_course_system.entity.Student;
 import com.university.university_course_system.entity.User;
 import com.university.university_course_system.mapper.StudentMapper;
 import com.university.university_course_system.mapper.UserMapper;
+import com.university.university_course_system.service.ReportService;
 import com.university.university_course_system.service.StudentService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.BeanUtils;
@@ -16,6 +18,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.university.university_course_system.entity.User.UserType.student;
+
 @Service
 public class StudentServiceImpl implements StudentService {
 
@@ -25,10 +29,22 @@ public class StudentServiceImpl implements StudentService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private ReportService reportService;
+
     @Override
     public StudentResponse getStudentById(Integer studentId) {
         Student student = studentMapper.findByIdWithDepartment(studentId);
-        return convertToResponse(student);
+        StudentResponse response = convertToResponse(student);
+
+        // 🔥 关键：补充 GPA 信息
+        StudentGpaDTO gpaDTO = reportService.getStudentGpa(studentId);
+        if (gpaDTO != null) {
+            response.setTotalCredits(gpaDTO.getTotalCredits());
+            response.setCumulativeGpa(gpaDTO.getCumulativeGpa());
+        }
+
+        return response;
     }
 
     @Override
@@ -122,10 +138,18 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public void deleteStudent(Integer studentId, HttpSession session) {
+        // 查询学生及对应的用户账号
         Student student = studentMapper.findByIdWithDepartment(studentId);
         if (student == null) {
             throw new RuntimeException("学生不存在，ID: " + studentId);
         }
+
+        // 将对应的 user 账号状态设置为 inactive（软删除）
+        int updated = userMapper.deactivateUser(student.getUserId());
+        if (updated == 0) {
+            throw new RuntimeException("无法注销该学生的用户账号，ID: " + student.getUserId());
+        }
+
         studentMapper.delete(studentId);
     }
 

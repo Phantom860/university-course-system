@@ -153,15 +153,6 @@ public class InstructorServiceImpl implements InstructorService {
 
     @Override
     public List<InstructorDTO> searchInstructors(String keyword) {
-        // 这里可以使用XML配置更复杂的搜索逻辑
-        List<Instructor> allInstructors = instructorMapper.findAll();
-        return allInstructors.stream()
-                .filter(instructor ->
-                        instructor.getFirstName().contains(keyword) ||
-                                instructor.getLastName().contains(keyword) ||
-                                instructor.getEmployeeNumber().contains(keyword) ||
-                                instructor.getTitle().contains(keyword))
-                .map(InstructorDTO::fromInstructor)
-                .collect(Collectors.toList());
+        return instructorMapper.searchInstructors(keyword);
     }
 }

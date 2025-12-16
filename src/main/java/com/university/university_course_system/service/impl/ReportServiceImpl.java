@@ -36,6 +36,7 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private DepartmentMapper departmentMapper;
 
+
     /*
     获取学生gpa
      */

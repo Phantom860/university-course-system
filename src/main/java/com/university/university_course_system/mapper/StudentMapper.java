@@ -30,6 +30,9 @@ public interface StudentMapper {
     @Options(useGeneratedKeys = true, keyProperty = "studentId")
     int insert(Student student);
 
+    // 新的学生注册逻辑，专用于 RegisterRequest
+    int insertByRegister(Student student);
+
     @Update("UPDATE student SET first_name = #{firstName}, last_name = #{lastName}, " +
             "gender = #{gender}, date_of_birth = #{dateOfBirth}, department_id = #{departmentId}, " +
             "major = #{major}, admission_year = #{admissionYear} " +

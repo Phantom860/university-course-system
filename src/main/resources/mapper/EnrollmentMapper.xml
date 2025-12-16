@@ -23,13 +23,14 @@
 
         <!-- 关联课程段对象 -->
         <association property="courseSection" javaType="com.university.university_course_system.entity.CourseSection">
+            <result property="sectionId" column="cs_section_id"/> <!-- 注意这里用别名 -->
             <result property="sectionCode" column="section_code"/>
 
             <!-- 嵌套关联课程对象 -->
             <association property="course" javaType="com.university.university_course_system.entity.Course">
                 <result property="courseCode" column="course_code"/>
                 <result property="courseName" column="course_name"/>
-                <result property="credits" column="credits"/>  <!-- 添加这行 -->
+                <result property="credits" column="credits"/>
             </association>
 
             <!-- 嵌套关联教师对象 -->
@@ -38,6 +39,8 @@
                 <result property="lastName" column="instructor_last_name"/>
             </association>
         </association>
+
+
     </resultMap>
 
     <!-- 根据ID查询选课详情 -->
@@ -57,11 +60,27 @@
 
     <!-- 根据学生ID查询选课列表 -->
     <select id="findByStudentId" resultMap="EnrollmentDetailMap">
-        SELECT e.*,
-        s.student_number, s.first_name, s.last_name,
-        c.course_code, c.course_name, c.credits,
+        SELECT
+        e.enrollment_id,
+        e.student_id,
+        e.section_id,          <!-- 顶层字段 -->
+        e.semester_id,
+        e.enrollment_status,
+        e.numeric_grade,
+        e.letter_grade,
+        e.grade_points,
+        e.enrolled_at,
+        e.updated_at,
+        s.student_number,
+        s.first_name AS student_first_name,
+        s.last_name AS student_last_name,
+        cs.section_id AS cs_section_id,  <!-- 嵌套对象的字段，避免冲突 -->
         cs.section_code,
-        i.first_name as instructor_first_name, i.last_name as instructor_last_name
+        c.course_code,
+        c.course_name,
+        c.credits,
+        i.first_name AS instructor_first_name,
+        i.last_name AS instructor_last_name
         FROM enrollment e
         JOIN student s ON e.student_id = s.student_id
         JOIN coursesection cs ON e.section_id = cs.section_id
@@ -69,6 +88,9 @@
         JOIN instructor i ON cs.instructor_id = i.instructor_id
         WHERE e.student_id = #{studentId}
     </select>
+
+
+
 
     <!-- 根据课程段ID查询选课列表 -->
     <select id="findBySectionId" resultMap="EnrollmentDetailMap">
@@ -115,6 +137,26 @@
         FROM enrollment e
         JOIN coursesection cs ON e.section_id = cs.section_id
         WHERE cs.course_id = #{courseId} AND e.numeric_grade IS NOT NULL
+    </select>
+    <select id="findEnrollmentsBySectionId" resultType="com.university.university_course_system.dto.response.EnrollmentDetailDTO">
+        SELECT
+        e.enrollment_id,
+        cs.section_id,
+        cs.section_code,
+        c.course_name,
+        s.student_id AS studentId,
+        s.student_number AS studentNumber,
+        s.first_name AS studentFirstName,
+        s.last_name AS studentLastName,
+        i.instructor_id AS instructorId,
+        i.first_name AS instructorFirstName,
+        i.last_name AS instructorLastName
+        FROM enrollment e
+        LEFT JOIN coursesection cs ON e.section_id = cs.section_id
+        LEFT JOIN course c ON cs.course_id = c.course_id
+        LEFT JOIN student s ON e.student_id = s.student_id
+        LEFT JOIN instructor i ON cs.instructor_id = i.instructor_id
+        WHERE cs.section_id = #{sectionId}
     </select>
 
 </mapper>

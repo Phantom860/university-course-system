@@ -29,9 +29,17 @@ public interface UserMapper {
     @Select("SELECT * FROM student WHERE user_id = #{userId}")
     Student findStudentByUserId(Long userId);
 
+    // 根据userId获取学生ID
+    @Select("SELECT student_id FROM student WHERE user_id = #{userId}")
+    Integer findStudentIdByUserId(Integer userId);
+
+    // 根据userId获取教师ID
+    @Select("SELECT instructor_id FROM instructor WHERE user_id = #{userId}")
+    Integer findInstructorIdByUserId(Integer userId);
+
     // 教师相关查询
-    @Select("SELECT * FROM instructor WHERE instructor_number = #{instructorNumber}")
-    Instructor findInstructorByNumber(String instructorNumber);
+    @Select("SELECT * FROM instructor WHERE employee_number = #{employeeNumber}")
+    Instructor findInstructorByNumber(String employeeNumber);
 
     @Select("SELECT * FROM instructor WHERE user_id = #{userId}")
     Instructor findInstructorByUserId(Long userId);
@@ -70,6 +78,10 @@ public interface UserMapper {
     @Select("SELECT * FROM user WHERE status = #{status} ORDER BY created_at DESC")
     List<User> findUsersByStatus(@Param("status") String status);
 
+    //删除学生-软删除
+    @Update("UPDATE user SET status = 'inactive' WHERE user_id = #{userId}")
+    int deactivateUser(@Param("userId") Integer userId);
+
 
     @Select("SELECT * FROM user WHERE user_id = #{userId} AND user_type = 'instructor' AND status = 'active'")
     User findActiveInstructorUser(Integer userId);
@@ -82,4 +94,10 @@ public interface UserMapper {
 
     @Select("SELECT COUNT(*) > 0 FROM user WHERE user_id = #{userId} AND user_type = 'student' AND status = 'active'")
     boolean isActiveStudentUser(Integer userId);
+
+    //根据userid修改电话邮箱
+    @Update("UPDATE user SET phone = #{phone}, email = #{email} WHERE user_id = #{userId}")
+    int updatePhoneAndEmailByUserId(@Param("userId") Integer userId,
+                                    @Param("phone") String phone,
+                                    @Param("email") String email);
 }

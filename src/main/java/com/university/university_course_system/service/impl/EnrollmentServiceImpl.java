@@ -2,10 +2,14 @@ package com.university.university_course_system.service.impl;
 
 import com.university.university_course_system.dto.request.EnrollmentRequest;
 import com.university.university_course_system.dto.request.GradeUpdateRequest;
+import com.university.university_course_system.dto.response.CompletedCourseInfo;
+import com.university.university_course_system.dto.response.EnrollmentDetailDTO;
 import com.university.university_course_system.dto.response.EnrollmentResponse;
+import com.university.university_course_system.entity.CoursePrereq;
 import com.university.university_course_system.entity.CourseSection;
 import com.university.university_course_system.entity.Enrollment;
 import com.university.university_course_system.entity.Student;
+import com.university.university_course_system.mapper.CoursePrereqMapper;
 import com.university.university_course_system.mapper.CourseSectionMapper;
 import com.university.university_course_system.mapper.EnrollmentMapper;
 import com.university.university_course_system.mapper.StudentMapper;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +43,9 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     @Autowired
     private CourseScheduleService courseScheduleService;
 
+    @Autowired
+    private CoursePrereqMapper coursePrereqMapper;
+
     @Override
     public EnrollmentResponse getEnrollmentById(Integer enrollmentId) {
         Enrollment enrollment = enrollmentMapper.findByIdWithDetails(enrollmentId);
@@ -52,12 +60,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<EnrollmentResponse> getEnrollmentsBySection(Integer sectionId) {
-        List<Enrollment> enrollments = enrollmentMapper.findBySectionId(sectionId);
-        return enrollments.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+
+
+
+    /*
+    根据sectionid获取所有选了该排课的选课信息（enrollmentid,学生姓名学号，老师姓名等）
+     */
+    public List<EnrollmentDetailDTO> getEnrollmentsBySectionId(Integer sectionId) {
+        return enrollmentMapper.findEnrollmentsBySectionId(sectionId);
     }
 
     /*
@@ -127,7 +137,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
             throw new RuntimeException("选课记录不存在");
         }
 
-        enrollmentMapper.updateStatus(enrollmentId, "dropped");
+        enrollmentMapper.delete(enrollmentId);
 
         // 更新课程段当前选课人数
         courseSectionMapper.decrementCurrentEnrollment(enrollment.getSectionId());
@@ -171,13 +181,72 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         courseSectionMapper.decrementCurrentEnrollment(enrollment.getSectionId());
     }
 
+
+    /*
+    检查先修课程
+     */
     @Override
     public boolean checkPrerequisites(Integer studentId, Integer sectionId) {
-        // TODO: 实现先修课程检查
-        // 暂时返回true，待实现
-        System.out.println("⚠️ 先修课程检查暂未实现，默认通过");
+
+        // 1. 查本节课 → courseId
+        CourseSection targetSection = courseSectionMapper.findById(sectionId);
+        if (targetSection == null) {
+            throw new RuntimeException("选课失败：找不到课程节 sectionId=" + sectionId);
+        }
+
+        Integer courseId = targetSection.getCourseId();
+
+        // 2. 查本课程的先修要求
+        List<CoursePrereq> prereqs = coursePrereqMapper.findByCourseId(courseId);
+        if (prereqs == null || prereqs.isEmpty()) {
+            return true; // 没有先修要求
+        }
+
+        // 3. 查询学生已完成的课程（从 enrollment → section → course）
+        List<CompletedCourseInfo> completedList = enrollmentMapper.findCompletedCourses(studentId);
+
+        // 转成 map: key=courseId, value=grade
+        Map<Integer, BigDecimal> gradeMap = completedList.stream()
+                .collect(Collectors.toMap(
+                        CompletedCourseInfo::getCourseId,
+                        CompletedCourseInfo::getNumericGrade
+                ));
+
+        // 4. 逐条检查先修要求
+        for (CoursePrereq p : prereqs) {
+
+            Integer preCourseId = p.getPrereqCourseId();
+            BigDecimal grade = gradeMap.get(preCourseId);
+
+            // 必修课没修
+            if (p.getMandatory() != null && p.getMandatory() && grade == null) {
+                throw new RuntimeException(
+                        "未满足必修先修课程：" + preCourseId
+                );
+            }
+
+            // 有最低成绩要求但没修
+            if (p.getMinGrade() != null && grade == null) {
+                throw new RuntimeException(
+                        "缺少达到成绩要求的先修课程：" + preCourseId
+                );
+            }
+
+            // 修了但成绩不达标
+            if (p.getMinGrade() != null && grade != null &&
+                    grade.compareTo(p.getMinGrade()) < 0) {
+
+                throw new RuntimeException(
+                        "先修课程成绩不足：课程 " + preCourseId +
+                                " 要求至少 " + p.getMinGrade() +
+                                "，实际 " + grade
+                );
+            }
+        }
+
         return true;
     }
+
 
     private EnrollmentResponse convertToResponse(Enrollment enrollment) {
         if (enrollment == null) {

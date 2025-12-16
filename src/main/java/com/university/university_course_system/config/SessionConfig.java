@@ -13,11 +13,12 @@ public class SessionConfig implements WebMvcConfigurer {
     // 允许跨域请求（前端测试时需要）
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:3000")  // 前端地址
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)  // 允许携带Cookie
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*") // ⭐ 允许任意前端域名
+                .allowedMethods("*")        // ⭐ 允许所有方法 GET POST PUT DELETE
+                .allowedHeaders("*")        // ⭐ 允许所有请求头
+                .allowCredentials(true)     // ⭐ 允许携带 cookie
+
                 .maxAge(3600);
     }
 }

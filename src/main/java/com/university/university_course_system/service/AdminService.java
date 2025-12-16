@@ -3,7 +3,9 @@ package com.university.university_course_system.service;
 
 import com.university.university_course_system.dto.UserInfoDTO;
 import com.university.university_course_system.dto.request.ApprovalRequest;
+import com.university.university_course_system.dto.request.PrereqSettingRequest;
 import com.university.university_course_system.dto.response.ApprovalResponse;
+import com.university.university_course_system.entity.CoursePrereq;
 import com.university.university_course_system.entity.CourseSection;
 
 import java.util.List;
@@ -46,4 +48,13 @@ public interface AdminService {
      * 检查容量设置是否合理
      */
     boolean validateCapacity(Integer sectionId, Integer newMaxCapacity);
+
+    /**
+     * 为课程设置先修课程
+     */
+    boolean setCoursePrerequisites(PrereqSettingRequest request);
+
+    List<CoursePrereq> getCoursePrerequisites(Integer courseId);
+
+
 }

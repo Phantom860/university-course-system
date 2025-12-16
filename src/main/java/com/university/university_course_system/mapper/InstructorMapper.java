@@ -1,5 +1,6 @@
 package com.university.university_course_system.mapper;
 
+import com.university.university_course_system.dto.response.InstructorDTO;
 import com.university.university_course_system.entity.Instructor;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
@@ -32,6 +33,15 @@ public interface InstructorMapper {
     @Options(useGeneratedKeys = true, keyProperty = "instructorId")
     int insert(Instructor instructor);
 
+    /**
+     * 注册时插入教师记录，只插入最基础字段
+     * 其余字段数据库自动为 NULL
+     */
+    @Insert("INSERT INTO instructor (user_id, employee_number, first_name, last_name) " +
+            "VALUES (#{userId}, #{employeeNumber}, #{firstName}, #{lastName})")
+    @Options(useGeneratedKeys = true, keyProperty = "instructorId")
+    int insertByRegister(Instructor instructor);
+
     // 更新教师信息
     @Update("UPDATE instructor SET employee_number = #{employeeNumber}, first_name = #{firstName}, last_name = #{lastName}, " +
             "title = #{title}, department_id = #{departmentId}, office_location = #{officeLocation}, research_interests = #{researchInterests} " +
@@ -53,4 +63,18 @@ public interface InstructorMapper {
             "LEFT JOIN department d ON i.department_id = d.department_id " +
             "WHERE i.instructor_id = #{instructorId}")
     Instructor findInstructorDetailById(Integer instructorId);
+
+    //搜索教师信息
+    @Select("SELECT i.instructor_id, i.user_id, i.employee_number, i.first_name, i.last_name, i.title, " +
+            "i.department_id, i.office_location, i.research_interests, " +
+            "u.username, u.email, d.department_name " +
+            "FROM instructor i " +
+            "LEFT JOIN user u ON i.user_id = u.user_id " +
+            "LEFT JOIN department d ON i.department_id = d.department_id " +
+            "WHERE i.first_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR i.last_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR i.employee_number LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR i.title LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR d.department_name LIKE CONCAT('%', #{keyword}, '%')")
+    List<InstructorDTO> searchInstructors(@Param("keyword") String keyword);
 }

@@ -3,8 +3,10 @@ package com.university.university_course_system.controller;
 
 import com.university.university_course_system.dto.UserInfoDTO;
 import com.university.university_course_system.dto.request.ApprovalRequest;
+import com.university.university_course_system.dto.request.PrereqSettingRequest;
 import com.university.university_course_system.dto.response.ApiResponse;
 import com.university.university_course_system.dto.response.ApprovalResponse;
+import com.university.university_course_system.entity.CoursePrereq;
 import com.university.university_course_system.entity.CourseSection;
 import com.university.university_course_system.entity.User;
 import com.university.university_course_system.service.AdminService;
@@ -197,4 +199,31 @@ public class AdminController {
             return ApiResponse.error("课程段信息更新失败: " + e.getMessage());
         }
     }
+
+
+    /*
+    设置先修课程
+     */
+    @PostMapping("/course/setPrereq")
+    public ApiResponse<String> setPrerequisite(@RequestBody PrereqSettingRequest request,
+                                               HttpSession session) {
+        if (!checkAdminPermission(session)) {
+            return ApiResponse.error("权限不足，需要管理员权限");
+        }
+
+        adminService.setCoursePrerequisites(request);
+        return ApiResponse.success("先修课程设置成功");
+    }
+
+
+    /*
+    查看先修课程信息
+     */
+    @GetMapping("/course/getPrereq/{courseId}")
+    public ApiResponse<List<CoursePrereq>> getPrerequisite(@PathVariable Integer courseId,
+                                                           HttpSession session) {
+        return ApiResponse.success(adminService.getCoursePrerequisites(courseId));
+    }
+
+
 }

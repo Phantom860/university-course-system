@@ -1,5 +1,7 @@
 package com.university.university_course_system.mapper;
 
+import com.university.university_course_system.dto.response.CompletedCourseInfo;
+import com.university.university_course_system.dto.response.EnrollmentDetailDTO;
 import com.university.university_course_system.entity.Enrollment;
 import org.apache.ibatis.annotations.*;
 
@@ -41,4 +43,22 @@ public interface EnrollmentMapper {
     Map<String, Object> getGradeDistributionByCourse(@Param("courseId") Integer courseId);
 
     Map<String, Object> getScoreDistributionByCourse(@Param("courseId") Integer courseId);
+
+    //根据sectionid获取所有选了该排课的选课信息（enrollmentid,学生姓名学号，老师姓名等）
+    List<EnrollmentDetailDTO> findEnrollmentsBySectionId(@Param("sectionId") Integer sectionId);
+
+
+    //获取已通过课程
+    @Select("""
+    SELECT 
+        cs.course_id AS courseId,
+        e.numeric_grade AS numericGrade
+    FROM enrollment e
+    JOIN coursesection cs ON e.section_id = cs.section_id
+    WHERE 
+        e.student_id = #{studentId}
+        AND e.enrollment_status = 'passed'
+""")
+    List<CompletedCourseInfo> findCompletedCourses(Integer studentId);
+
 }

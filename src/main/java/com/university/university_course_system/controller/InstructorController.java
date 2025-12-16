@@ -135,12 +135,9 @@ public class InstructorController {
     }
 
     // 搜索教师
-    @Operation(summary = "搜索教师", description = "根据关键词搜索教师（仅管理员可操作）")
+    @Operation(summary = "搜索教师", description = "根据关键词搜索教师")
     @GetMapping("/search")
     public ApiResponse<List<InstructorDTO>> searchInstructors(@RequestParam String keyword, HttpSession session) {
-        if (!authService.isAdmin(session)) {
-            return ApiResponse.error("权限不足，需要管理员权限");
-        }
 
         List<InstructorDTO> instructors = instructorService.searchInstructors(keyword);
         return ApiResponse.success(instructors);

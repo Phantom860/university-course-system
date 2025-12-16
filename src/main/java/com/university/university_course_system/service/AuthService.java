@@ -29,4 +29,10 @@ public interface AuthService {
 
     // 检查是否是教师
     boolean isInstructor(HttpSession session);
+
+    public Integer getStudentIdByUserId(Integer userId);
+
+    public Integer getInstructorIdByUserId(Integer userId);
+
+    boolean updateContactInfo(Integer userId, String phone, String email);
 }

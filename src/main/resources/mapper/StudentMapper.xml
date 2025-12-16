@@ -50,4 +50,10 @@
         WHERE s.department_id = #{departmentId}
     </select>
 
+    <!-- 新增：根据注册信息插入 student（字段最少版本） -->
+    <insert id="insertByRegister" useGeneratedKeys="true" keyProperty="studentId">
+        INSERT INTO student (user_id, student_number, first_name, last_name)
+        VALUES (#{userId}, #{studentNumber}, #{firstName}, #{lastName})
+    </insert>
+
 </mapper>

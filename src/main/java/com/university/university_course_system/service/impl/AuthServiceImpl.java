@@ -9,6 +9,8 @@ import com.university.university_course_system.dto.response.RegisterResponse;
 import com.university.university_course_system.entity.Instructor;
 import com.university.university_course_system.entity.Student;
 import com.university.university_course_system.entity.User;
+import com.university.university_course_system.mapper.InstructorMapper;
+import com.university.university_course_system.mapper.StudentMapper;
 import com.university.university_course_system.mapper.UserMapper;
 import com.university.university_course_system.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,26 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private StudentMapper studentMapper;
+
+    @Autowired
+    private InstructorMapper instructorMapper;
+
+    /**
+     * 根据userId获取学生ID
+     */
+    public Integer getStudentIdByUserId(Integer userId) {
+        return userMapper.findStudentIdByUserId(userId);
+    }
+
+    /**
+     * 根据userId获取教师ID
+     */
+    public Integer getInstructorIdByUserId(Integer userId) {
+        return userMapper.findInstructorIdByUserId(userId);
+    }
 
     /*
     登录
@@ -49,6 +71,8 @@ public class AuthServiceImpl implements AuthService {
                 if (instructor != null) {
                     user = userMapper.findById(instructor.getUserId());
                 }
+            } else if ("admin".equals(userTypeStr)) {
+                user = userMapper.findByUsername(loginRequest.getUsername());
             } else {
                 response.setMessage("用户类型不合法");
                 return response;
@@ -148,14 +172,14 @@ public class AuthServiceImpl implements AuthService {
             User user = new User();
             user.setUsername(registerRequest.getUsername());
 
-            // 密码MD5加密
+            // 密码加密
             String passwordHash = DigestUtils.md5DigestAsHex(registerRequest.getPassword().getBytes());
             user.setPasswordHash(passwordHash);
 
             user.setEmail(registerRequest.getEmail());
             user.setPhone(registerRequest.getPhone());
 
-            // 转换用户类型
+            // 类型转换
             User.UserType userType = convertToUserType(registerRequest.getUserType());
             if (userType == null) {
                 response.setMessage("无效的用户类型");
@@ -164,27 +188,35 @@ public class AuthServiceImpl implements AuthService {
             }
             user.setUserType(userType);
 
-            // 重要：设置状态为待审核
+            // 设置账号状态为等待审核
             user.setStatus(User.UserStatus.pending);
 
-            // 4. 保存用户
+            // 4. 保存用户到 user 表
             int result = userMapper.insertUser(user);
-            if (result > 0) {
-                response.setSuccess(true);
-                response.setMessage("注册成功，等待管理员审核");
-                response.setUserId(user.getUserId());
-            } else {
+
+            if (result <= 0) {
                 response.setSuccess(false);
                 response.setMessage("注册失败，请重试");
+                return response;
             }
+
+
+
+            // *************************************************
+
+            response.setSuccess(true);
+            response.setMessage("注册成功，等待管理员审核");
+            response.setUserId(user.getUserId());
 
         } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage("注册失败: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return response;
     }
+
 
 
     /*
@@ -279,5 +311,14 @@ public class AuthServiceImpl implements AuthService {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+
+    /*
+    根据userid修改电话邮箱
+     */
+    public boolean updateContactInfo(Integer userId, String phone, String email) {
+        int updatedRows = userMapper.updatePhoneAndEmailByUserId(userId, phone, email);
+        return updatedRows > 0;
     }
 }

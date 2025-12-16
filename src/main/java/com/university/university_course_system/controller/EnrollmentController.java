@@ -3,6 +3,7 @@ package com.university.university_course_system.controller;
 import com.university.university_course_system.dto.request.EnrollmentRequest;
 import com.university.university_course_system.dto.request.GradeUpdateRequest;
 import com.university.university_course_system.dto.response.ApiResponse;
+import com.university.university_course_system.dto.response.EnrollmentDetailDTO;
 import com.university.university_course_system.dto.response.EnrollmentResponse;
 import com.university.university_course_system.service.AuthService;
 import com.university.university_course_system.service.EnrollmentService;
@@ -49,13 +50,15 @@ public class EnrollmentController {
 
     @Operation(summary = "获取课程段的所有选课记录", description = "查询指定课程段的所有学生选课记录")
     @GetMapping("/section/{sectionId}")
-    public ApiResponse<List<EnrollmentResponse>> getEnrollmentsBySection(@PathVariable Integer sectionId) {
-        try {
-            List<EnrollmentResponse> enrollments = enrollmentService.getEnrollmentsBySection(sectionId);
-            return ApiResponse.success(enrollments);
-        } catch (RuntimeException e) {
-            return ApiResponse.error(e.getMessage());
+    public ApiResponse<List<EnrollmentDetailDTO>> getEnrollmentsBySectionId(@PathVariable Integer sectionId) {
+        List<EnrollmentDetailDTO> enrollments = enrollmentService.getEnrollmentsBySectionId(sectionId);
+
+        if (enrollments == null || enrollments.isEmpty()) {
+            // 没有选课记录就返回 error
+            return ApiResponse.error("sectionId=" + sectionId + " 没有选课记录");
         }
+
+        return ApiResponse.success(enrollments);
     }
 
     /*
@@ -130,4 +133,6 @@ public class EnrollmentController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+
 }

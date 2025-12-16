@@ -4,6 +4,7 @@ import com.university.university_course_system.dto.request.LoginRequest;
 import com.university.university_course_system.dto.request.RegisterRequest;
 import com.university.university_course_system.dto.response.ApiResponse;
 import com.university.university_course_system.dto.response.AuthResponse;
+import com.university.university_course_system.dto.response.IdResponse;
 import com.university.university_course_system.dto.response.RegisterResponse;
 import com.university.university_course_system.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +21,44 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    /**
+     * 根据userId获取学生ID
+     */
+    @GetMapping("/student-id/{userId}")
+    public ApiResponse<IdResponse> getStudentId(@PathVariable Integer userId) {
+        try {
+            Integer studentId = authService.getStudentIdByUserId(userId);
+            if (studentId != null) {
+                IdResponse idResponse = new IdResponse(studentId, "student");
+                return ApiResponse.success(idResponse);
+            } else {
+                return ApiResponse.error("该用户不是学生");
+            }
+        } catch (Exception e) {
+            return ApiResponse.error("查询失败: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 根据userId获取教师ID
+     */
+    @GetMapping("/instructor-id/{userId}")
+    public ApiResponse<IdResponse> getInstructorId(@PathVariable Integer userId) {
+        try {
+            Integer instructorId = authService.getInstructorIdByUserId(userId);
+            if (instructorId != null) {
+                IdResponse idResponse = new IdResponse(instructorId, "instructor");
+                return ApiResponse.success(idResponse);
+            } else {
+                return ApiResponse.error("该用户不是教师");
+            }
+        } catch (Exception e) {
+            return ApiResponse.error("查询失败: " + e.getMessage());
+        }
+    }
+
 
     @Operation(summary = "用户登录", description = "使用用户名和密码登录系统，成功后建立Session")
     @PostMapping("/login")
@@ -73,5 +112,18 @@ public class AuthController {
     @GetMapping("/test")
     public ApiResponse<String> test() {
         return ApiResponse.success("认证模块测试成功");
+    }
+
+
+    @PutMapping("/{userId}/contact")
+    public ApiResponse<Void> updateContact(@PathVariable Integer userId,
+                                           @RequestParam String phone,
+                                           @RequestParam String email) {
+        boolean success = authService.updateContactInfo(userId, phone, email);
+        if (success) {
+            return ApiResponse.success(null); // 修改成功，无返回数据
+        } else {
+            return ApiResponse.error("用户不存在或更新失败");
+        }
     }
 }

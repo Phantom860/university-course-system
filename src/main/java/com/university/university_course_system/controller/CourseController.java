@@ -3,6 +3,9 @@ package com.university.university_course_system.controller;
 import com.university.university_course_system.dto.request.CourseRequest;
 import com.university.university_course_system.dto.response.ApiResponse;
 import com.university.university_course_system.dto.response.CourseResponse;
+import com.university.university_course_system.dto.response.CourseSectionDetailDTO;
+import com.university.university_course_system.entity.CourseSection;
+import com.university.university_course_system.mapper.CourseSectionMapper;
 import com.university.university_course_system.service.AuthService;
 import com.university.university_course_system.service.CourseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +23,9 @@ public class CourseController {
 
     @Autowired
     private CourseService courseService;
+
+    @Autowired
+    private CourseSectionMapper courseSectionMapper;
 
     @Autowired
     private AuthService authService;
@@ -112,4 +118,66 @@ public class CourseController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+
+    /*
+    根据coursename获取排课信息
+     */
+    @GetMapping("/sections")
+    public ApiResponse<List<CourseSection>> getSectionsByCourseName(
+            @RequestParam String courseName) {
+
+        try {
+            List<CourseSection> sections = courseService.getSectionsByCourseName(courseName);
+
+            if (sections == null || sections.isEmpty()) {
+                return ApiResponse.error("未找到名称为 '" + courseName + "' 的课程或无排课信息");
+            }
+
+            return ApiResponse.success(sections);
+
+        } catch (Exception e) {
+            return ApiResponse.error("查询失败: " + e.getMessage());
+        }
+    }
+
+
+
+    /*
+    根据教师id查询排课信息
+     */
+    @GetMapping("/instructor/{instructorId}")
+    public ApiResponse<List<CourseSection>> getSectionsByInstructorId(
+            @PathVariable Integer instructorId) {
+
+        try {
+            List<CourseSection> sections = courseService.getSectionsByInstructor(instructorId);
+
+            if (sections == null || sections.isEmpty()) {
+                return ApiResponse.error("该教师暂无排课信息");
+            }
+
+            return ApiResponse.success(sections);
+
+        } catch (Exception e) {
+            return ApiResponse.error("查询失败: " + e.getMessage());
+        }
+    }
+
+
+    /*
+    根据sectionid查询课程相关信息
+     */
+    @GetMapping("/sections/detail")
+    public ApiResponse<CourseSectionDetailDTO> getSectionDetail(@RequestParam Integer sectionId) {
+        CourseSectionDetailDTO sectionDetail = courseService.getSectionDetail(sectionId);
+        if (sectionDetail == null) {
+            // 查询不到，直接返回错误信息，不抛异常
+            return ApiResponse.error("sectionId=" + sectionId + " 的排课不存在");
+        }
+
+        // 查询到，返回成功
+        return ApiResponse.success(sectionDetail);
+    }
+
 }

@@ -3,11 +3,10 @@ package com.university.university_course_system.service.impl;
 
 import com.university.university_course_system.dto.UserInfoDTO;
 import com.university.university_course_system.dto.request.ApprovalRequest;
+import com.university.university_course_system.dto.request.PrereqSettingRequest;
 import com.university.university_course_system.dto.response.ApprovalResponse;
-import com.university.university_course_system.entity.CourseSection;
-import com.university.university_course_system.entity.User;
-import com.university.university_course_system.mapper.CourseSectionMapper;
-import com.university.university_course_system.mapper.UserMapper;
+import com.university.university_course_system.entity.*;
+import com.university.university_course_system.mapper.*;
 import com.university.university_course_system.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,16 @@ public class AdminServiceImpl implements AdminService {
     private UserMapper userMapper;
 
     @Autowired
+    private StudentMapper studentMapper;
+
+    @Autowired
+    private InstructorMapper instructorMapper;
+
+    @Autowired
     private CourseSectionMapper courseSectionMapper;
+
+    @Autowired
+    private CoursePrereqMapper coursePrereqMapper;
 
     /*
     获取待审核用户
@@ -82,6 +90,29 @@ public class AdminServiceImpl implements AdminService {
             if ("approve".equalsIgnoreCase(request.getAction())) {
                 // 批准用户
                 int result = userMapper.updateUserStatus(request.getUserId(), "active");
+
+                // 2. 审核通过后再插入 student/instructor 表
+                if (user.getUserType() == User.UserType.student) {
+
+                    // 创建学生对象
+                    Student student = new Student();
+                    student.setUserId(user.getUserId());
+                    student.setStudentNumber(user.getUsername());  // 学号 = username
+
+                    // 其他字段可默认 null
+
+                    studentMapper.insertByRegister(student);
+                }
+                else if (user.getUserType() == User.UserType.instructor) {
+
+                    Instructor instructor = new Instructor();
+                    instructor.setUserId(user.getUserId());
+                    instructor.setEmployeeNumber(user.getUsername()); // 工号 = username
+
+
+                    instructorMapper.insertByRegister(instructor);
+                }
+
                 if (result > 0) {
                     System.out.println("用户 " + request.getUserId() + " 审核通过");
                     return new ApprovalResponse(true, "用户审核通过");
@@ -268,5 +299,40 @@ public class AdminServiceImpl implements AdminService {
             System.out.println("❌ 更新课程段信息失败: " + e.getMessage());
             throw new RuntimeException("更新课程段信息失败: " + e.getMessage());
         }
+    }
+
+
+    /*
+    设置先修课程
+     */
+    @Override
+    public boolean setCoursePrerequisites(PrereqSettingRequest request) {
+
+        Integer courseId = request.getCourseId();
+        List<CoursePrereq> prereqs = request.getPrereqs();
+
+        // 先删除旧的
+        coursePrereqMapper.deleteByCourseId(courseId);
+
+        // 如果没有传入先修课程，表示清空成功
+        if (prereqs == null || prereqs.isEmpty()) {
+            return true;
+        }
+
+        // 插入新的
+        for (CoursePrereq p : prereqs) {
+            p.setCourseId(courseId);
+            coursePrereqMapper.insert(p);
+        }
+
+        return true;
+    }
+
+    /*
+    获取先修课程
+     */
+    @Override
+    public List<CoursePrereq> getCoursePrerequisites(Integer courseId) {
+        return coursePrereqMapper.findByCourseId(courseId);
     }
 }

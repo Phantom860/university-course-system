@@ -2,14 +2,18 @@ package com.university.university_course_system.service.impl;
 
 import com.university.university_course_system.dto.request.CourseRequest;
 import com.university.university_course_system.dto.response.CourseResponse;
+import com.university.university_course_system.dto.response.CourseSectionDetailDTO;
 import com.university.university_course_system.entity.Course;
+import com.university.university_course_system.entity.CourseSection;
 import com.university.university_course_system.mapper.CourseMapper;
+import com.university.university_course_system.mapper.CourseSectionMapper;
 import com.university.university_course_system.service.CourseService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +22,9 @@ public class CourseServiceImpl implements CourseService {
 
     @Autowired
     private CourseMapper courseMapper;
+
+    @Autowired
+    private CourseSectionMapper courseSectionMapper;
 
     @Override
     public CourseResponse getCourseById(Integer courseId) {
@@ -111,4 +118,27 @@ public class CourseServiceImpl implements CourseService {
 
         return response;
     }
+
+    public List<CourseSection> getSectionsByCourseName(String courseName) {
+        Course course = courseMapper.findByCourseName(courseName);
+
+        if (course == null) {
+            return Collections.emptyList(); // 没有课程名
+        }
+
+        return courseSectionMapper.findSectionsByCourseId(course.getCourseId());
+
+    }
+
+    public List<CourseSection> getSectionsByInstructor(Integer instructorId) {
+        return courseSectionMapper.findSectionsByInstructorId(instructorId);
+    }
+
+    /*
+    根据sectionid查询相关课程信息
+     */
+    public CourseSectionDetailDTO getSectionDetail(Integer sectionId) {
+        return courseSectionMapper.getSectionDetailById(sectionId);
+    }
+
 }

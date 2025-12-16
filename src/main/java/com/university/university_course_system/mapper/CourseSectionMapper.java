@@ -1,5 +1,6 @@
 package com.university.university_course_system.mapper;
 
+import com.university.university_course_system.dto.response.CourseSectionDetailDTO;
 import com.university.university_course_system.entity.CourseSection;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,8 +12,40 @@ import java.util.List;
 @Mapper
 public interface CourseSectionMapper {
 
+    /*
+    根据courseid查询sectionid
+     */
     @Select("SELECT section_id FROM coursesection WHERE course_id = #{courseId}")
     List<Integer> findSectionIdsByCourseId(@Param("courseId") Integer courseId);
+
+    /*
+   根据courseid查询排课信息
+    */
+    @Select("SELECT * FROM coursesection WHERE course_id = #{courseId}")
+    List<CourseSection> findSectionsByCourseId(Integer courseId);
+
+    //根据教师id查询排课信息
+    @Select("SELECT * FROM coursesection WHERE instructor_id = #{instructorId}")
+    List<CourseSection> findSectionsByInstructorId(@Param("instructorId") Integer instructorId);
+
+    //根据sectionid查询所有课程信息
+    @Select("""
+SELECT 
+    cs.*, 
+    c.course_code, c.course_name, c.credits, c.department_id, 
+    c.course_type, c.description, c.learning_objectives, c.total_hours,
+    d.department_name,
+    i.first_name AS instructorFirstName,
+    i.last_name AS instructorLastName
+FROM coursesection cs
+LEFT JOIN course c ON cs.course_id = c.course_id
+LEFT JOIN department d ON c.department_id = d.department_id
+LEFT JOIN instructor i ON cs.instructor_id = i.instructor_id
+WHERE cs.section_id = #{sectionId}
+""")
+    CourseSectionDetailDTO getSectionDetailById(Integer sectionId);
+
+
 
     @Select("SELECT cs.*, s.semester_code as semesterCode " +  // 使用别名
             "FROM coursesection cs " +

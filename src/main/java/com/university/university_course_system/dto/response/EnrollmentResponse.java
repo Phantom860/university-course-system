@@ -13,12 +13,21 @@ public class EnrollmentResponse {
     private String courseCode;
     private String courseName;
     private String sectionCode;
+    private Integer sectionId;
     private String instructorName;
     private Enrollment.EnrollmentStatus enrollmentStatus;
     private BigDecimal numericGrade;
     private String letterGrade;
     private BigDecimal gradePoints;
     private LocalDateTime enrolledAt;
+
+    public Integer getSectionId() {
+        return sectionId;
+    }
+
+    public void setSectionId(Integer sectionId) {
+        this.sectionId = sectionId;
+    }
 
     public Integer getEnrollmentId() {
         return enrollmentId;

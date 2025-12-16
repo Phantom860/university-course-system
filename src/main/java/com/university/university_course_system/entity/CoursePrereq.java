@@ -81,6 +81,6 @@ public class CoursePrereq {
     private Course prereqCourse;
 
     public enum GradeRequirement {
-        PASS, MINIMUM_GRADE
+        pass, minimum_grade
     }
 }
